@@ -11,22 +11,25 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
+const (
+	connectionString = "amqp://guest:guest@localhost:5672/"
+	exchange         = routing.ExchangePerilDirect
+	pauseKey         = routing.PauseKey
+)
+
 func main() {
-	const connectionString = "amqp://guest:guest@localhost:5672/"
-	const exchange = routing.ExchangePerilDirect
-	const pauseKey = routing.PauseKey
-	fmt.Println("Starting Peril server...")
+	fmt.Println("Starting Peril Server...")
 
 	conn, err := amqp.Dial(connectionString)
 	if err != nil {
-		log.Fatalf("could not connect to RabbitMQ: %v", err)
+		log.Fatalf("server could not connect to RabbitMQ: %v", err)
 	}
 	defer func() {
 		if err := conn.Close(); err != nil {
-			log.Printf("error closing connection to RabbitMQ: %v", err)
+			log.Printf("server error closing connection to RabbitMQ: %v", err)
 		}
 	}()
-	fmt.Println("Connection to RabbitMQ successful")
+	fmt.Println("Server Connection to RabbitMQ successful")
 
 	pauseChann, err := conn.Channel()
 	if err != nil {
@@ -41,5 +44,5 @@ func main() {
 	<-signalChan
 
 	fmt.Println("")
-	fmt.Println("Peril server shutdown")
+	fmt.Println("Peril Server successfully shutdown")
 }
