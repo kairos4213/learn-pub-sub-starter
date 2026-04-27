@@ -12,8 +12,10 @@ import (
 
 const (
 	connectionString = "amqp://guest:guest@localhost:5672/"
-	exchange         = routing.ExchangePerilDirect
+	directExchange   = routing.ExchangePerilDirect
+	topicExchange    = routing.ExchangePerilTopic
 	pauseKey         = routing.PauseKey
+	logKey           = routing.GameLogSlug
 )
 
 func main() {
@@ -30,6 +32,11 @@ func main() {
 	}()
 	fmt.Println("Server Connection to RabbitMQ successful")
 
+	_, _, err = pubsub.DeclareAndBind(conn, topicExchange, "game_logs", logKey+".*", pubsub.Durable)
+	if err != nil {
+		log.Printf("error declaring and binding game logs: %v", err)
+	}
+
 	pauseChann, err := conn.Channel()
 	if err != nil {
 		log.Printf("error opening pause/resume channel: %v", err)
@@ -41,12 +48,12 @@ func main() {
 		switch input[0] {
 		case "pause":
 			log.Println("Sending pause message")
-			if err = pubsub.PublishJSON(pauseChann, exchange, pauseKey, routing.PlayingState{IsPaused: true}); err != nil {
+			if err = pubsub.PublishJSON(pauseChann, directExchange, pauseKey, routing.PlayingState{IsPaused: true}); err != nil {
 				log.Printf("error publishing pause message to pause channel: %v", err)
 			}
 		case "resume":
 			log.Println("Sending resume message")
-			if err = pubsub.PublishJSON(pauseChann, exchange, pauseKey, routing.PlayingState{IsPaused: false}); err != nil {
+			if err = pubsub.PublishJSON(pauseChann, directExchange, pauseKey, routing.PlayingState{IsPaused: false}); err != nil {
 				log.Printf("error publishing resume message to pause channel: %v", err)
 			}
 		case "quit":
